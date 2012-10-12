@@ -23,6 +23,12 @@ import com.amazonaws.services.simpledb.model.SelectRequest;
 import com.amazonaws.services.simpledb.model.SelectResult;
 import com.amazonaws.services.simpledb.util.SimpleDBUtils;
 
+/**
+ * 
+ * @author Youji Ochi, Yuki Takubo
+ * http://www.ochi-lab.org/research/project/osimplemapper
+ *
+ */
 public class OSimpleMapper {
 
 	private AmazonSimpleDBClient sdb;
@@ -52,7 +58,7 @@ public class OSimpleMapper {
 			PutAttributesRequest request = new PutAttributesRequest();
 			Set<String> keyList = map.keySet();
 			for(String key:keyList){
-		    //データ本体
+		   
 		    ReplaceableAttribute data = new ReplaceableAttribute();
 		    data.withName(key).withValue(map.get(key));
 
@@ -94,7 +100,7 @@ public class OSimpleMapper {
 		    SelectResult result = sdb.select(request);
 		    for (Item row : result.getItems()) {
 		   	 Map<String, String[]> map = new HashMap<String, String[]>();
-				// 属性情報を表示します
+			
 				for (Attribute attr : row.getAttributes()) {
 					String value[] = new String[1];
 					value[0]=attr.getValue();
@@ -126,7 +132,7 @@ public class OSimpleMapper {
 				
 		
 		 Map<String, String[]> map = new HashMap<String, String[]>();
-		// 属性情報を表示します
+		
 		for (Attribute attr : getAttrResult.getAttributes()) {
 			
 			String value[] = new String[1];
