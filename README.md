@@ -1,0 +1,4 @@
+OSimpleMapper
+=============
+
+Mapper for SimpleDB
