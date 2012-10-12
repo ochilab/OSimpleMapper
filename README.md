@@ -1,4 +1,1 @@
-OSimpleMapper
-=============
-
-Mapper for SimpleDB
+This library is a Mapper for SimpleDB. 
