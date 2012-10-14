@@ -51,7 +51,7 @@ public class OSimpleMapper {
 	}
 	
 	
-	public void put(Object o) {
+	public void put(Object o) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 
 		HashMap<String, String> map = this.mapping(o);
 			String itemName = map.get("itemName");
@@ -130,7 +130,7 @@ public class OSimpleMapper {
 		
 		return obj;
 	}
-	private HashMap<String, String> mapping(Object o) {
+	private HashMap<String, String> mapping(Object o) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 
 		Object instance = o;
 		Class<?> c = instance.getClass();// そのオブジェクト内の調査準備
@@ -142,12 +142,10 @@ public class OSimpleMapper {
 																								// フィールドの値>のList
 		HashMap<String, String> ffMap = new HashMap<String, String>();// 一人ずつのデータのために毎回HashMapをニュー
 		for (Map.Entry<String, Method> map : fMethodMap.entrySet()) {
-			try {
+			
 				Method method = map.getValue();
 				ffMap.put(map.getKey(), method.invoke(o).toString());
-			} catch (Exception er) {
-				er.printStackTrace();
-			}
+			
 		}
 		return ffMap;
 	}
