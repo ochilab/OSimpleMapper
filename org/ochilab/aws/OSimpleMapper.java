@@ -1,6 +1,7 @@
 package org.ochilab.aws;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,18 +34,19 @@ public class OSimpleMapper {
 
 	private AmazonSimpleDBClient sdb;
 	private String prefix;
+	private String endPoint;
 
-	public OSimpleMapper(String awsId, String secretKey, String prefix) {// コンストラクター
-		_OSimpleDB(awsId, secretKey, prefix);
+	public OSimpleMapper(String awsId, String secretKey, String endPoint,String prefix) {// コンストラクター
+		_OSimpleDB(awsId, secretKey, endPoint,prefix);
 	}
-	public OSimpleMapper(String awsId, String secretKey) {// コンストラクター
+	public OSimpleMapper(String awsId, String secretKey,String endPoint) {// コンストラクター
 		this.prefix = "";
-		_OSimpleDB(awsId, secretKey, prefix);
+		_OSimpleDB(awsId, secretKey, endPoint, prefix);
 	}
 
-	private void _OSimpleDB(String awsId, String secretKey, String prefix){
+	private void _OSimpleDB(String awsId, String secretKey, String endPoint, String prefix){
 		sdb = new AmazonSimpleDBClient(new BasicAWSCredentials(awsId, secretKey));
-	    sdb.setEndpoint("sdb.amazonaws.com");
+	    sdb.setEndpoint(endPoint);
 		this.prefix = prefix;
 	}
 	
@@ -52,7 +54,6 @@ public class OSimpleMapper {
 	public void put(Object o) {
 
 		HashMap<String, String> map = this.mapping(o);
-		try {
 			String itemName = map.get("itemName");
 			map.remove("itemName");
 			PutAttributesRequest request = new PutAttributesRequest();
@@ -68,9 +69,6 @@ public class OSimpleMapper {
 			}
 			
 			System.out.println(o.getClass().getSimpleName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
 	}
 
@@ -83,19 +81,14 @@ public class OSimpleMapper {
 	
 	
 	public void delete(Class<?> c, String itemName) {
-		try {
 			sdb.deleteAttributes(new DeleteAttributesRequest(c.getSimpleName(), itemName)
 			.withAttributes(new Attribute().withName("author")));
 		
-		} catch (Exception e) {
-		
-			e.printStackTrace();
-		}
+
 	}
 
-	public List select(Class<?> c, String query) {
+	public List select(Class<?> c, String query) throws SecurityException, IllegalArgumentException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 		List list = new ArrayList();
-		try {
 		    SelectRequest request = new SelectRequest(query,true);
 		    SelectResult result = sdb.select(request);
 		    for (Item row : result.getItems()) {
@@ -109,17 +102,10 @@ public class OSimpleMapper {
 				Object obj = this.mapToObject(c.newInstance().getClass(), map);
 				list.add(obj);
 		    }
-		
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			
-		}finally{
-			return list;
-		}
+		return list;
+
 	}
-	public Object get(Class<?> c, String itemName) {
+	public Object get(Class<?> c, String itemName) throws SecurityException, IllegalArgumentException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 		Map result;
 		Object obj=null; ;
 
@@ -217,34 +203,22 @@ public class OSimpleMapper {
 		return map;
 	}
 
-	private Object mapToObject(Class<?> c, Map<String, String[]> map) {
+	private Object mapToObject(Class<?> c, Map<String, String[]> map) throws InstantiationException, IllegalAccessException, SecurityException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
 		Class<?> clazz=null;
 		Object obj=null;
-		try {
 		 obj=c.newInstance();
 			clazz = obj.getClass();
 			for (String key : map.keySet()) {// このfor文で一つのオブジェクトが完成！
 				String setterMethodName = "set" + key.substring(0, 1).toUpperCase()
 						+ key.substring(1);// mapのキー値（フィールド名）からセッターメソッド名を推測）
 				String[] setterMethodArgument = (String[])map.get(key);// mapの中身から、セッターメソッドの引数を入手
-				try {
 					Method method = clazz.getMethod(setterMethodName,
 							new Class[] { String.class });// ↑の２値からセッターメソッド作成
 					method.invoke(obj, setterMethodArgument);// セッターメソッド実行
-				} catch (Exception e) {
-					System.out.println("Error(mapToObject):"+e.getMessage());
-				}
+
 			}
 			//System.out.println(clazz.toString());
-		} catch (InstantiationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IllegalAccessException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}finally{
 			return obj;
-		}
 	}
 
 
