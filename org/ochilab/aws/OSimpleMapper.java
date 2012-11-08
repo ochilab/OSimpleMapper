@@ -84,9 +84,7 @@ public class OSimpleMapper {
 	}
 
 	public void delete(Class<?> c, String itemName) {
-		sdb.deleteAttributes(new DeleteAttributesRequest(c.getSimpleName(),
-				itemName).withAttributes(new Attribute().withName("author")));
-
+		sdb.deleteAttributes(new DeleteAttributesRequest(c.getSimpleName(),itemName));
 	}
 
 	public List select(Class<?> c, String query) throws SecurityException,
