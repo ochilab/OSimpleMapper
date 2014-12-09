@@ -1,3 +1,4 @@
+
 package org.ochilab.aws;
 
 import java.lang.reflect.InvocationTargetException;
@@ -10,7 +11,6 @@ import java.util.Set;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
-
 import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.DeleteAttributesRequest;
 import com.amazonaws.services.simpledb.model.DeleteDomainRequest;
@@ -21,13 +21,12 @@ import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
 import com.amazonaws.services.simpledb.model.SelectRequest;
 import com.amazonaws.services.simpledb.model.SelectResult;
-import com.amazonaws.services.simpledb.util.SimpleDBUtils;
 
 /**
- * 
+ *
  * @author Youji Ochi, Yuki Takubo
  *         http://www.ochi-lab.org/research/project/osimplemapper
- * 
+ *
  */
 public class OSimpleMapper {
 
@@ -66,7 +65,7 @@ public class OSimpleMapper {
 			ReplaceableAttribute data = new ReplaceableAttribute();
 			data.withName(key).withValue(map.get(key));
 
-			request.withDomainName(o.getClass().getSimpleName())
+			request.withDomainName(this.prefix+o.getClass().getSimpleName())
 					.withItemName(itemName).withAttributes(data);
 
 			sdb.putAttributes(request);
@@ -78,13 +77,13 @@ public class OSimpleMapper {
 
 	public void deleteDomain(String domainName) {
 
-		DeleteDomainRequest request = new DeleteDomainRequest(domainName);
+		DeleteDomainRequest request = new DeleteDomainRequest(this.prefix+  domainName);
 		sdb.deleteDomain(request);
 		System.out.println("ドメイン名:" + domainName + "を削除しました");
 	}
 
 	public void delete(Class<?> c, String itemName) {
-		sdb.deleteAttributes(new DeleteAttributesRequest(c.getSimpleName(),itemName));
+		sdb.deleteAttributes(new DeleteAttributesRequest(this.prefix+  c.getSimpleName(),itemName));
 	}
 
 	public List select(Class<?> c, String query) throws SecurityException,
@@ -102,7 +101,7 @@ public class OSimpleMapper {
 				value[0] = attr.getValue();
 				map.put(attr.getName(), value);
 			}
-			Object obj = this.mapToObject(c.newInstance().getClass(), map);
+			Object obj = this.mapToObject( c.newInstance().getClass(), map);
 			list.add(obj);
 		}
 		return list;
@@ -119,7 +118,7 @@ public class OSimpleMapper {
 
 		GetAttributesResult getAttrResult = sdb
 				.getAttributes(new GetAttributesRequest().withDomainName(
-						c.getSimpleName()).withItemName(itemName));
+						this.prefix+ c.getSimpleName()).withItemName(itemName));
 
 		Map<String, String[]> map = new HashMap<String, String[]>();
 
@@ -158,7 +157,7 @@ public class OSimpleMapper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param list
 	 * @return
 	 * @throws InvocationTargetException
