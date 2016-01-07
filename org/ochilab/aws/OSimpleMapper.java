@@ -29,6 +29,7 @@ import com.amazonaws.services.simpledb.model.SelectResult;
  *         http://www.ochi-lab.org/research/project/osimplemapper
  * 
  */
+//新バージョン
 public class OSimpleMapper {
 
 	private AmazonSimpleDBClient sdb;
@@ -61,23 +62,57 @@ public class OSimpleMapper {
 	public void put(Object o) throws IllegalArgumentException,
 			IllegalAccessException, InvocationTargetException {
 
+		
 		HashMap<String, String> map = this.mapping(o);
 		String itemName = map.get("itemName");
 		map.remove("itemName");
-		PutAttributesRequest request = new PutAttributesRequest();
-		Set<String> keyList = map.keySet();
-		for (String key : keyList) {
-
-			ReplaceableAttribute data = new ReplaceableAttribute();
-			data.withName(key).withValue(map.get(key));
-
-			request.withDomainName(o.getClass().getSimpleName())
-					.withItemName(itemName).withAttributes(data);
-
-			sdb.putAttributes(request);
+		
+		Class<? extends Object> clazz = o.getClass();
+		if(!_class_classData__Map.containsKey(clazz)){//オブジェクトのフィールド　メソッドマップが登録されているかどうかチェック
+			add__classClassData_Map(clazz);//されていなかったら、このメソッドで登録する。
+		}else{
+			System.out.println("_class_classData__Mapに登録済みだからputも簡単");
 		}
+		ClassData classData = _class_classData__Map.get(clazz);
+		Map<String, Method> fieldNameGetterMethod_Map = classData.getFieldNameGetterMethod_Map();
+		
+		Map<String, String>    fieldNameFieldvalue_Map = new HashMap<String, String>();// フィールドname,フィールド値Map
+		Map<String, String[]> fieldNameFieldvalueArray_Map = new HashMap<String, String[]>();// フィールドname,フィールド値Map
+		PutAttributesRequest request = new PutAttributesRequest();
 
-		//System.out.println(o.getClass().getSimpleName());
+		for(String key:fieldNameGetterMethod_Map.keySet()){
+			Method getterMethod=fieldNameGetterMethod_Map.get(key);
+			String returnType=getterMethod.getGenericReturnType().toString();
+			ReplaceableAttribute data = new ReplaceableAttribute();
+			try{
+				if(returnType.equals("class java.lang.String")){//ゲッターの戻り値がStringなら
+					//System.out.println(getterMethod.getName()+"；成功（String）");
+					//fieldNameFieldvalue_Map.put(check_IS_itemName(key), (String) getterMethod.invoke(o));// フィールド,フィールド値(配列)Map
+					data.withName(key).withValue( (String) getterMethod.invoke(o));
+					request.withDomainName(prefix +o.getClass().getSimpleName())
+						.withItemName(itemName).withAttributes(data);		
+					sdb.putAttributes(request);
+					
+										
+					
+				}else{//ゲッターの戻り値が配列なら		
+					//System.out.println(getterMethod.getName()+"；成功（配列）");
+					String[] values = (String[]) getterMethod.invoke(o);
+					for(String value : values){
+						data.withName(key).withValue(value);
+						request.withDomainName(prefix +o.getClass().getSimpleName())
+							.withItemName(itemName).withAttributes(data);		
+						sdb.putAttributes(request);						
+					}
+					
+					//fieldNameFieldvalueArray_Map.put(key, (String[]) getterMethod.invoke(o));// フィールド,フィールド値(配列)Map
+					//List<Map<String, String>> mapList = arrayMap_TO_mapList(fieldNameFieldvalueArray_Map);
+										
+				}
+			}catch(Exception e){
+				System.out.println("バグの原因になっているmethodの名前=" +getterMethod.getName());
+			}
+		}
 
 	}
 
@@ -96,7 +131,7 @@ public class OSimpleMapper {
 	 * item名指定による削除
 	 */
 	public void delete(Class<?> c, String itemName) {
-		sdb.deleteAttributes(new DeleteAttributesRequest(c.getSimpleName(),itemName));
+		sdb.deleteAttributes(new DeleteAttributesRequest(prefix +c.getSimpleName(),itemName));
 	}
 
 	/**
@@ -164,7 +199,7 @@ public class OSimpleMapper {
 		Object obj = null;
 		GetAttributesResult getAttrResult = sdb
 				.getAttributes(new GetAttributesRequest().withDomainName(
-						c.getSimpleName()).withItemName(itemName));
+						prefix +c.getSimpleName()).withItemName(itemName));
 
 		Map<String, String[]> map = new HashMap<String, String[]>();
 
