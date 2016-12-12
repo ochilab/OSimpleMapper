@@ -341,9 +341,21 @@ public class OSimpleMapper {
 					Method setterMethod = map_fieldName_setterMethod.get(key);// setterメソッド取得
 					Class[] setterMethodArgumentClasses = setterMethod.getParameterTypes();//全ての引数の型を取得
 					String setterMethodArgumentClassName=setterMethodArgumentClasses[0].getName();//セッターメソッドの引数は必ず一つなので０個目の引数のクラス名だけ取得
-
+					//引数が文字列の場合
 					if(setterMethodArgumentClassName.equals("java.lang.String")){
-						setterMethod.invoke(createdInstance, dataMap.get(key)[0]);// ０個目だけ入れる
+						if(dataMap.containsKey(key)){
+							String  arg =dataMap.get(key)[0];
+						//String  arg =dataMap.get("Time")[0];
+						//setterMethod.invoke(createdInstance, dataMap.get(key)[0]);// ０個目だけ入れる
+							setterMethod.invoke(createdInstance, arg);// ０個目だけ入れる
+						}else{
+							String key1=key.substring(1, key.length());
+							String key2=key.substring(0,1).toUpperCase();
+							key = key2+key1;
+							String  arg =dataMap.get(key)[0];
+							setterMethod.invoke(createdInstance, arg);// ０個目だけ入れる
+						}
+							
 					}
 					else{
 						setterMethod.invoke(createdInstance,(Object)dataMap.get(key));// 配列ごと入れる
